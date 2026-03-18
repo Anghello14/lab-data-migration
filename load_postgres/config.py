@@ -20,6 +20,8 @@ TABLE_DESTINO = "lab_entrenamiento_maestra"
 MSG_ERR_TEXTO  = "DATO_INVALIDO"
 MSG_ERR_NUMERO = -1
 MSG_ERR_FECHA  = "1930-01-01"
+MSG_NULL  = "SIN DATO"
+MSG_ZERO  = "CAMPO CON VALOR CERO"
 
 # --- MOTOR DE BASE DE DATOS ---
 PG_URL = f"postgresql+psycopg2://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{PG_DB}"
