@@ -1,0 +1,4 @@
+oracledb
+pandas
+psycopg2-binary
+SQLAlchemy
