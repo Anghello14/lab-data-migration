@@ -29,3 +29,6 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+
+load_postgres/data/registros.txt
