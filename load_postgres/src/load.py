@@ -1,12 +1,30 @@
-import pandas as pd
 import io
 import psycopg2
 import logging
 import time
 import psutil
 import sys
+import re
 from psycopg2.extras import execute_values
 from config import PG_USER, PG_PASS, PG_HOST, PG_PORT, PG_DB
+
+# Identificadores SQL válidos: solo letras, números y guión bajo
+_IDENT_RE = re.compile(r'^[a-z_][a-z0-9_]*$')
+
+def _validate_identifier(name: str, context: str):
+    """Lanza ValueError si el identificador no es seguro para incrustar en SQL."""
+    if not _IDENT_RE.match(name):
+        raise ValueError(f"Identificador SQL inválido en {context}: '{name}'")
+
+def _connect():
+    """Abre conexión con DateStyle=ISO para que Postgres interprete
+    siempre las fechas en formato YYYY-MM-DD sin ambigüedades."""
+    conn = psycopg2.connect(
+        dbname=PG_DB, user=PG_USER, password=PG_PASS,
+        host=PG_HOST, port=PG_PORT,
+        options="-c datestyle=ISO"
+    )
+    return conn
 
 def check_ram_limit():
     """Verifica si la RAM supera el 85% y detiene el proceso si es necesario."""
@@ -17,7 +35,7 @@ def check_ram_limit():
 
 def is_batch_processed(batch_id):
     """Revisa en Postgres si el lote ya fue cargado exitosamente."""
-    conn = psycopg2.connect(dbname=PG_DB, user=PG_USER, password=PG_PASS, host=PG_HOST, port=PG_PORT)
+    conn = _connect()
     cur = conn.cursor()
     cur.execute("SELECT estado FROM control_lotes WHERE batch_id = %s AND estado = 'FINALIZADO'", (batch_id,))
     result = cur.fetchone()
@@ -26,23 +44,27 @@ def is_batch_processed(batch_id):
     return result is not None
 
 def load_data(df, table_name, batch_id, strategy="execute_values"):
-    # 1. Verificación de Idempotencia
-    if is_batch_processed(batch_id):
-        logging.info(f"----- LOTE #{batch_id} ya fue cargado anteriormente. Saltando...")
-        return len(df), 0, 0, 0
-
-    # 2. Protección de Hardware
+    # La idempotencia ya fue verificada en main.py antes de llamar aquí.
+    # Protección de Hardware
     check_ram_limit()
     
     start_time = time.time()
     rows_to_process = len(df)
-    conn = psycopg2.connect(dbname=PG_DB, user=PG_USER, password=PG_PASS, host=PG_HOST, port=PG_PORT)
+    conn = _connect()
     cur = conn.cursor()
-    
+    # Forzar DateStyle ISO en esta sesión — garantiza que Postgres interprete
+    # las fechas como YYYY-MM-DD sin importar la configuración del servidor.
+    cur.execute("SET datestyle = 'ISO, YMD'")
+
     try:
         # Registrar inicio en tabla de control
         cur.execute("INSERT INTO control_lotes (batch_id, estado) VALUES (%s, 'PROCESANDO') ON CONFLICT (batch_id) DO NOTHING", (batch_id,))
         
+        # Validar tabla y columnas antes de construir la query (previene SQL injection)
+        _validate_identifier(table_name, 'table_name')
+        for col in df.columns:
+            _validate_identifier(col, f'columna {col}')
+
         if strategy == "execute_values":
             query = f"INSERT INTO {table_name} ({','.join(df.columns)}) VALUES %s"
             execute_values(cur, query, [tuple(x) for x in df.values])
@@ -96,7 +118,7 @@ def print_final_report(total_success, total_fail, total_time, lotes_cargados=Non
         logging.info(f"----- LOTES PROCESADOS: {len(lotes_cargados)} lote(s)")
         for i, lote in enumerate(lotes_cargados, start=1):
             logging.info(
-                f"  Lote {i}: {lote['Lote']} registros | "
+                f"Lote {i}: {lote['Lote']} registros | "
                 f"Estrategia: {lote['Estrategia']} | "
                 f"Tiempo: {lote['Tiempo']} | "
                 f"RAM consumida: {lote['RAM_pct']}"

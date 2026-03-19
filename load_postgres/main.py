@@ -61,10 +61,10 @@ def main():
 
     logging.info("\n" + "="*60)
     logging.info(f"----- PLAN DE CARGA: {total_lotes} lotes para {total_filas:,} registros")
-    logging.info(f"  · 20 lotes de  25,000  → {20 * 25_000:>12,} registros")
-    logging.info(f"  · 15 lotes de 100,000  → {15 * 100_000:>12,} registros")
-    logging.info(f"  · 16 lotes de 250,000  → {16 * 250_000:>12,} registros")
-    logging.info(f"  · {lotes_500k} lotes de 500,000  → resto del archivo")
+    logging.info(f"  - 20 lotes de  25,000  → {20 * 25_000:>12,} registros")
+    logging.info(f"  - 15 lotes de 100,000  → {15 * 100_000:>12,} registros")
+    logging.info(f"  - 16 lotes de 250,000  → {16 * 250_000:>12,} registros")
+    logging.info(f"  - {lotes_500k} lotes de 500,000  → resto del archivo")
     logging.info("="*60)
 
     resultados_finales = []

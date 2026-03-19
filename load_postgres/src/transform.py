@@ -6,71 +6,83 @@ from config import (
     MSG_NULL, MSG_ZERO
 )
 
+# Compilados a nivel módulo para no recrearlos en cada lote
+_CTRL_RE = re.compile(r'[\x00-\x1f\x7f-\x9f]')
+_YEAR_RE = re.compile(r'^(\d{2})([-/]\d{2}[-/]\d{2})$')
+
+def _expand_year(v: str) -> str:
+    """
+    Expande año de 2 dígitos a 4 en cualquier columna.
+    Solo actúa sobre cadenas que coincidan EXACTAMENTE con YY-MM-DD o YY/MM/DD.
+    Texto normal nunca hace match con este patrón.
+    Regla: YY > 26 → '19YY...', YY <= 26 → '20YY...'
+    """
+    m = _YEAR_RE.match(v)
+    if m:
+        yy = int(m.group(1))
+        return ('19' if yy > 26 else '20') + v
+    return v
+
+
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Módulo de TRANSFORMACIÓN profesional con normalización vectorizada.
     """
     logging.info("----- Iniciando normalizacion y limpieza profunda...")
 
-    # 1. NORMALIZAR NOMBRES DE COLUMNAS A MINÚSCULAS PRIMERO
+    # 1. COPIA Y NORMALIZACIÓN DE NOMBRES DE COLUMNAS
     df_clean = df.copy()
     df_clean.columns = [c.lower() for c in df_clean.columns]
 
-    # 2. NORMALIZACIÓN DE STRINGS (Versión optimizada para Pandas 2.x)
-    # En lugar de una función por celda, limpiamos la serie completa
+    # 2. NORMALIZACIÓN DE STRINGS — list comprehensions de Python puro.
+    # _expand_year se aplica a TODAS las columnas aquí: si una columna de fecha
+    # no tiene 'fecha' en el nombre, el año corto queda expandido igualmente.
     for col in df_clean.columns:
-        if df_clean[col].dtype == 'object':
-            # Convertir a minúsculas y quitar espacios extremos
-            df_clean[col] = df_clean[col].astype(str).str.lower().str.strip()
-            # Eliminar caracteres de control (Regex no imprimibles)
-            df_clean[col] = df_clean[col].str.replace(r'[\x00-\x1f\x7f-\x9f]', '', regex=True)
+        df_clean[col] = [
+            _expand_year(_CTRL_RE.sub('', str(v).lower().strip()))
+            for v in df_clean[col]
+        ]
 
-    # 3. MANEJO DE NULL / VACÍOS / CEROS (Reemplazos masivos)
-    # Usamos los mensajes estándar de tu config
+    # 3. MANEJO DE NULL / VACÍOS / CEROS
+    # Después del paso 2 todo es str: NaN → 'nan', None → 'none', 0 → '0', 0.0 → '0.0'
     reemplazos = {
-        'NaN': MSG_NULL.lower(),
+        'nan':  MSG_NULL.lower(),
         'none': MSG_NULL.lower(),
-        '': MSG_NULL.lower(),
-        '0': MSG_ZERO.lower(),
-        0: MSG_ZERO.lower(),
-        '0.0': MSG_ZERO.lower()
+        '':     MSG_NULL.lower(),
+        '0':    MSG_ZERO.lower(),
+        '0.0':  MSG_ZERO.lower()
     }
     df_clean = df_clean.replace(reemplazos)
 
     # 4. VALIDACIÓN DINÁMICA DE CAMPOS NUMÉRICOS
-    # Buscamos columnas que contengan 'id', 'cod' o 'num' en su nombre ya en minúsculas
-    cols_para_int = [c for c in df_clean.columns if any(x in c for x in ['id', 'cod', 'num'])]
-    
+    # \bid\b  → word boundary: evita capturar 'apellido', 'valido', etc.
+    cols_para_int = [
+        c for c in df_clean.columns
+        if re.search(r'\bid\b|\bcod|\bnum', c)
+    ]
     for col in cols_para_int:
-        # Convertimos a numérico el contenido de la columna limpia
-        # Esto gestiona el error de tipos que vimos antes
         series_numerica = pd.to_numeric(df_clean[col], errors='coerce')
-        
-        # Máscara de error usando la serie numérica y el valor original en df_clean
-        mask_error = (series_numerica.isna() & (df_clean[col].astype(str).str.strip() != '0')) | (series_numerica < 0)
-        
-        # Aplicamos el centinela directamente sobre la serie numérica (evita TypeError en columnas StringDtype)
+        mask_error = series_numerica.isna() | (series_numerica < 0)
         series_numerica = series_numerica.where(~mask_error, other=float(MSG_ERR_NUMERO))
-        
-        # Aseguramos el tipo de dato final para la carga en Postgres
         df_clean[col] = series_numerica.fillna(float(MSG_ERR_NUMERO)).astype('int64')
 
-    # 5. REGLA ESPECÍFICA: GÉNERO (Consistencia de datos)
+    # 5. REGLA ESPECÍFICA: GÉNERO
     if 'genero' in df_clean.columns:
         permitidos = ['hombre', 'mujer']
-        # Si no es hombre ni mujer, es un DATO_INVALIDO
         mask_genero = ~df_clean['genero'].isin(permitidos)
         df_clean.loc[mask_genero, 'genero'] = MSG_ERR_TEXTO.lower()
 
     # 6. FORMATEO DE FECHAS (Centinela 1930-01-01)
+    # Los años cortos ya fueron expandidos en el paso 2 para TODAS las columnas.
+    # Aquí solo parseamos y formateamos las columnas cuyo nombre contiene 'fecha'.
+    SENTINEL = pd.Timestamp(MSG_ERR_FECHA)
     cols_fechas = [c for c in df_clean.columns if 'fecha' in c]
     for col in cols_fechas:
-        # Convertimos a fecha, lo que no sirve se vuelve NaT y luego se llena con el centinela
-        # dayfirst=True porque el formato del archivo es DD/MM/YYYY
-        df_clean[col] = pd.to_datetime(df_clean[col], dayfirst=True, errors='coerce').fillna(pd.Timestamp(MSG_ERR_FECHA))
-        df_clean[col] = df_clean[col].dt.strftime('%Y-%m-%d')
+        df_clean[col] = (
+            pd.to_datetime(df_clean[col], dayfirst=True, errors='coerce')
+            .fillna(SENTINEL)
+            .dt.strftime('%Y-%m-%d')
+        )
 
     logging.info(f"----- Normalizacion completada para {len(df_clean):,} registros.")
-
-
     return df_clean

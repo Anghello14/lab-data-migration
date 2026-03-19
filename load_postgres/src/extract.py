@@ -18,7 +18,7 @@ def inspect_file():
         raise FileNotFoundError(FILE_ORIGEN)
 
     logging.info("="*60)
-    logging.info("----- INSPECCIÓN RÁPIDA (3.1)")
+    logging.info("----- INSPECCION RAPIDA (3.1)")
 
     df_sample = pd.read_csv(FILE_ORIGEN, sep=SEP, engine='python', nrows=5, encoding=ENCODING)
 
@@ -50,7 +50,8 @@ def stream_batches(plan):
     """
     reader = pd.read_csv(
         FILE_ORIGEN, sep=SEP, engine='python',
-        chunksize=BASE_CHUNK, encoding=ENCODING
+        chunksize=BASE_CHUNK, encoding=ENCODING,
+        dtype=str        # garantiza que TODOS los valores lleguen como str exacto
     )
 
     buffer_df = pd.DataFrame()
