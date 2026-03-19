@@ -1,89 +1,80 @@
 import pandas as pd
 import logging
 import os
-from typing import Generator, Tuple
-from config import FILE_ORIGEN # Ruta definida en config.py
+from config import FILE_ORIGEN
 
-def get_text_data(chunk_size: int) -> Tuple[Generator[pd.DataFrame, None, None], int]:
-    # Realiza una inspección profunda y profesional del archivo fuente y retorna un generador para el procesamiento por lotes.
-    
-    # --- 1. VALIDACIÓN DE EXISTENCIA ---
+ENCODING = 'latin-1'
+SEP = '»'
+BASE_CHUNK = 25000  # Unidad mínima de lectura (todas las estrategias son múltiplos de esta)
+
+
+def inspect_file():
+    """
+    Inspección rápida: muestra cabecera, columnas y cuenta el total de registros.
+    Retorna: total_filas (int)
+    """
     if not os.path.exists(FILE_ORIGEN):
-        logging.error(f"----- ERROR CRÍTICO: No existe el archivo en {FILE_ORIGEN}")
-        raise FileNotFoundError(f"Archivo faltante: {FILE_ORIGEN}")
+        logging.error(f"Error: No se encontró {FILE_ORIGEN}")
+        raise FileNotFoundError(FILE_ORIGEN)
 
-    logging.info("="*50)
-    logging.info(f"----- INICIANDO INSPECCIÓN DE FUENTE: {FILE_ORIGEN}")
-    logging.info("="*50)
+    logging.info("="*60)
+    logging.info("----- INSPECCIÓN RÁPIDA (3.1)")
 
-    try:
-        # --- 2. PERFILAMIENTO INICIAL (Muestra representativa) ---
-        # Leemos solo 500 filas para inferir tipos y nulos sin agotar la RAM
-        df_sample = pd.read_csv(
-            FILE_ORIGEN, 
-            sep='»', 
-            engine='python', 
-            nrows=500, 
-            encoding='ISO-8859-1'
-        )
-        
-        # A. Conteo de Filas (Eficiente) y Columnas
-        with open(FILE_ORIGEN, 'r', encoding='ISO-8859-1') as f:
-            total_filas = sum(1 for line in f) - 1
-        total_columnas = len(df_sample.columns)
-        
-        logging.info(f"----- DIMENSIONES: {total_filas} filas | {total_columnas} columnas")
+    df_sample = pd.read_csv(FILE_ORIGEN, sep=SEP, engine='python', nrows=5, encoding=ENCODING)
 
-        # B. Tipos de Datos Inferidos
-        logging.info("----- TIPOS DE DATOS DETECTADOS (Muestra):")
-        for col, dtype in df_sample.dtypes.items():
-            logging.info(f"   - {col}: {dtype}")
+    logging.info("--- Contando registros totales (espere un momento)...")
+    count = 0
+    with open(FILE_ORIGEN, 'rb') as f:
+        for line in f:
+            count += 1
+    total_filas = count - 1
 
-        # C. Análisis de Nulidad (Porcentaje)
-        logging.info("----- ANÁLISIS DE HUECOS (NULOS %):")
-        null_pct = (df_sample.isnull().sum() / len(df_sample)) * 100
-        for col, pct in null_pct.items():
-            if pct > 0:
-                logging.warning(f"   - {col}: {pct:.2f}% de nulos detectados")
+    logging.info(f"* Total filas: {total_filas:,} | Columnas: {len(df_sample.columns)}")
+    logging.info(f"* Primeras 5 filas:\n{df_sample.to_string(index=False)}")
 
-        # D. Inspección de Anomalías (Top & Bottom) 
-        logging.info("----- PRIMEROS REGISTROS (Head):")
-        logging.info(f"\n{df_sample.head(2).to_string(index=False)}")
-        
-        # Para las últimas filas, leemos solo el final del archivo
-        df_tail = pd.read_csv(
-            FILE_ORIGEN, sep='»', engine='python', 
-            skiprows=range(1, total_filas - 1), encoding='ISO-8859-1'
-        )
-        logging.info("----- ÚLTIMOS REGISTROS (Tail):")
-        logging.info(f"\n{df_tail.to_string(index=False)}")
+    return total_filas
 
-    except Exception as e:
-        logging.error(f"----- ERROR DURANTE LA INSPECCIÓN: {e}")
-        raise
 
-    logging.info("="*50)
-    logging.info(f"----- INSPECCIÓN FINALIZADA. INICIANDO EXTRACCIÓN POR LOTES ({chunk_size})")
-    logging.info("="*50)
+def stream_batches(plan):
+    """
+    Generador que lee el archivo UNA sola vez y produce DataFrames de
+    tamaño variable según el plan de lotes.
 
-    # --- 3. GENERADOR DE DATOS (Estrategia Batch Loading) ---
-    def data_generator():
-        try:
-            reader = pd.read_csv(
-                FILE_ORIGEN,
-                sep='»',
-                engine='python',
-                chunksize=chunk_size, 
-                encoding='ISO-8859-1',
-                on_bad_lines='warn'
-            )
-            
-            for i, chunk in enumerate(reader):
-                logging.info(f"----- LOTE #{i+1}: Procesando {len(chunk)} registros...")
-                yield chunk
-                
-        except Exception as e:
-            logging.error(f"----- FALLO CRÍTICO EN EXTRACCIÓN: {e}")
-            raise
+    El archivo se lee en unidades de BASE_CHUNK filas y se acumula en un
+    buffer hasta completar cada lote. El puntero del archivo siempre
+    avanza en orden, garantizando que batch_id N siempre corresponda a
+    las mismas filas del archivo (condición necesaria para idempotencia).
 
-    return data_generator(), total_filas
+    plan  : list of (batch_id: int, size: int)
+    Yields: (batch_id: int, df: pd.DataFrame)
+    """
+    reader = pd.read_csv(
+        FILE_ORIGEN, sep=SEP, engine='python',
+        chunksize=BASE_CHUNK, encoding=ENCODING
+    )
+
+    buffer_df = pd.DataFrame()
+    chunk_iter = iter(reader)
+    eof = False
+
+    for batch_id, size in plan:
+        if eof and buffer_df.empty:
+            break
+
+        # Acumular chunks hasta tener al menos 'size' filas disponibles
+        while len(buffer_df) < size and not eof:
+            try:
+                new_chunk = next(chunk_iter)
+                buffer_df = pd.concat([buffer_df, new_chunk], ignore_index=True)
+            except StopIteration:
+                eof = True
+                break
+
+        if buffer_df.empty:
+            break
+
+        # Entregar exactamente 'size' filas (o las que queden en el último lote)
+        lote_df = buffer_df.iloc[:size].copy()
+        buffer_df = buffer_df.iloc[size:].reset_index(drop=True)
+
+        yield batch_id, lote_df
