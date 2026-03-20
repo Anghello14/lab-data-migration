@@ -12,12 +12,11 @@ PG_PORT = "5433"
 PG_DB   = "postgres"
 
 # --- CONFIGURACIÓN DE TABLA ÚNICA ---
-# Ahora todo va a una sola tabla como solicitaste
 TABLE_DESTINO = "lab_entrenamiento_maestra"
 
 # --- MENSAJES ESTÁNDAR PARA DATOS ERRÓNEOS ---
 # Estos son los valores que insertaremos cuando la validación falle
-MSG_ERR_TEXTO  = "DATO_INVALIDO"
+MSG_ERR_TEXTO  = "DATO INVALIDO"
 MSG_ERR_NUMERO = -1
 MSG_ERR_FECHA  = "1930-01-01"
 MSG_NULL  = "SIN DATO"
