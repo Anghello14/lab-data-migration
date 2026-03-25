@@ -1,0 +1,41 @@
+tablas:
+  MUNICIPIOS:
+    pk: "municipio_id"
+    col_fecha: null
+    periodo_tipo: "completa"
+  ESPECIALIDADES:
+    pk: "especialidad_id"
+    col_fecha: null
+    periodo_tipo: "completa"
+  MEDICOS:
+    pk: "medico_id"
+    col_fecha: "fecha_contratacion"
+    periodo_tipo: "anual"
+  PACIENTES:
+    pk: "paciente_id"
+    col_fecha: "fecha_registro"
+    periodo_tipo: "anual"
+  INTERNACIONES:
+    pk: "internacion_id"
+    col_fecha: "fecha_ingreso"
+    periodo_tipo: "mensual"
+  CITAS_MEDICAS:
+    pk: "cita_id"
+    col_fecha: "fecha_cita"
+    periodo_tipo: "mensual"
+  EXAMENES_MEDICOS:
+    pk: "examen_id"
+    col_fecha: null
+    periodo_tipo: "completa"
+  RESULTADOS_EXAMENES:
+    pk: "resultado_id"
+    col_fecha: "fecha_resultado"
+    periodo_tipo: "mensual"
+  MEDICAMENTOS_RECETADOS:
+    pk: "receta_id"
+    col_fecha: "fecha_prescripcion"
+    periodo_tipo: "mensual"
+  FACTURACION:
+    pk: "factura_id"
+    col_fecha: "fecha_emision"
+    periodo_tipo: "mensual"
