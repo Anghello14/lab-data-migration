@@ -3,9 +3,11 @@ sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')
 
 import gc
+import os
 import time
 import logging
 import psutil
+from datetime import datetime
 from src.extract import inspect_file, stream_batches
 from src.transform import clean_data
 from src.load import load_data, print_final_report, check_ram_limit, is_batch_processed
@@ -13,34 +15,22 @@ from src.load import load_data, print_final_report, check_ram_limit, is_batch_pr
 # Formato de logs profesional: Incluye marca de tiempo, nivel de severidad y el mensaje.
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+BATCH_SIZE = 250_000
+
 
 def build_plan(total_filas):
     """
-    ESTRATEGIA DE BENCHMARK:
-    Construye una hoja de ruta detallada para procesar el archivo en bloques variables.
-    Permite comparar el rendimiento de diferentes tamaños de lote y metodos de carga.
+    Genera el plan de carga uniforme: lotes de 250,000 filas con metodo COPY.
+    El ultimo lote puede ser menor si el total de filas no es multiplo exacto.
     """
     plan = []
     batch_id = 1
-
-    # Fase 1: Pruebas de carga ligera (Lotes de 25k)
-    for _ in range(20):
-        plan.append((batch_id, 25_000));   batch_id += 1
-    # Fase 2: Pruebas de carga media (Lotes de 100k)
-    for _ in range(15):
-        plan.append((batch_id, 100_000));  batch_id += 1
-    # Fase 3: Pruebas de carga pesada (Lotes de 250k - Cambio a estrategia COPY sugerido)
-    for _ in range(16):
-        plan.append((batch_id, 250_000));  batch_id += 1
-
-    # Fase 4: Procesamiento del resto del archivo en bloques maximos de 500k.
-    remaining = total_filas - (20 * 25_000 + 15 * 100_000 + 16 * 250_000)
+    remaining = total_filas
     while remaining > 0:
-        size = min(500_000, remaining)
+        size = min(BATCH_SIZE, remaining)
         plan.append((batch_id, size))
         batch_id += 1
         remaining -= size
-
     return plan
 
 
@@ -49,6 +39,18 @@ def main():
     Funcion Principal: Orquestador del Pipeline ETL.
     Coordina la Inspeccion, Extraccion, Transformacion y Carga (E-T-L).
     """
+    # 0. CONFIGURACION DE LOGGING A ARCHIVO
+    # Cada ejecucion genera un archivo de log independiente con sello de fecha/hora.
+    log_dir = "logs"
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    log_path = os.path.join(log_dir, f"pipeline_{timestamp}.log")
+    fh = logging.FileHandler(log_path, encoding='utf-8')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logging.getLogger().addHandler(fh)
+    logging.info(f"----- Log de sesion iniciado: {log_path}")
+
     # 1. INSPECCIÓN Y CONTEO INICIAL
     try:
         total_filas = inspect_file()
@@ -59,14 +61,15 @@ def main():
     # 2. GENERACION DEL PLAN DE EJECUCION
     plan = build_plan(total_filas)
     total_lotes = len(plan)
-    lotes_500k  = total_lotes - 51  # Calculo para el desglose visual del reporte.
+    lotes_completos = sum(1 for _, s in plan if s == BATCH_SIZE)
+    lotes_parciales = total_lotes - lotes_completos
 
     logging.info("\n" + "="*60)
-    logging.info(f"----- PLAN DE CARGA: {total_lotes} lotes para {total_filas:,} registros")
-    logging.info(f"  - 20 lotes de  25,000  = {20 * 25_000:>12,} registros")
-    logging.info(f"  - 15 lotes de 100,000  = {15 * 100_000:>12,} registros")
-    logging.info(f"  - 16 lotes de 250,000  = {16 * 250_000:>12,} registros")
-    logging.info(f"  - {lotes_500k} lotes de 500,000  =  resto del archivo")
+    logging.info(f"----- PLAN DE CARGA: {total_lotes} lotes para {total_filas:,} registros (Estrategia: COPY)")
+    logging.info(f"  - {lotes_completos} lotes de {BATCH_SIZE:,} = {lotes_completos * BATCH_SIZE:>12,} registros")
+    if lotes_parciales:
+        ultimo_size = plan[-1][1]
+        logging.info(f"  - 1 lote  parcial de {ultimo_size:>9,} = {ultimo_size:>12,} registros (ultimo lote)")
     logging.info("="*60)
 
     resultados_finales = []
@@ -76,9 +79,7 @@ def main():
     # 3. PIPELINE RECURSIVO: Se procesa lote por lote para optimizar memoria RAM.
     for batch_id, df_raw in stream_batches(plan):
         size     = len(df_raw)
-        # Seleccion inteligente de estrategia: 'execute_values' para volumenes pequeños,
-        # 'copy' para volumenes grandes donde el rendimiento es critico.
-        strategy = "execute_values" if size <= 100_000 else "copy"
+        strategy = "copy"  # Unica estrategia: COPY para todos los lotes.
 
         logging.info(f"\n----- LOTE #{batch_id}/{total_lotes} | {size:,} registros | {strategy.upper()}")
 

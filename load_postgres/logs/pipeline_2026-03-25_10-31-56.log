@@ -1,0 +1,53 @@
+2026-03-25 10:31:56,429 - INFO - ----- Log de sesion iniciado: logs\pipeline_2026-03-25_10-31-56.log
+2026-03-25 10:31:56,429 - INFO - ============================================================
+2026-03-25 10:31:56,429 - INFO - ----- INSPECCION RAPIDA (3.1)
+2026-03-25 10:31:56,435 - INFO - --- Contando registros totales (espere un momento)...
+2026-03-25 10:32:06,306 - INFO - * Total filas: 13,178,321 | Columnas: 53
+2026-03-25 10:32:06,306 - INFO - * Calidad (primeras 5 filas): Nulos=27.9% (74/265 celdas) | NaN=0.0% (0/265 celdas)
+2026-03-25 10:32:06,321 - INFO - * Primeras 5 filas:
+         ORIGEN       FUENTE   PROGRAMA  IDPERSONA  IDHOGAR TIPODOCUMENTO  DOCUMENTO PRIMERNOMBRE SEGUNDONOMBRE PRIMERAPELLIDO SEGUNDOAPELLIDO FECHANACIMIENTO  EXPEDICIONDOCUMENTO  FECHAEXPEDICIONDOCUMENTO            PERTENENCIAETNICA GENERO  TIPOHECHO                                                                     HECHO FECHAOCURRENCIA  CODDANEMUNICIPIOOCURRENCIA  ZONAOCURRENCIA  UBICACIONOCURRENCIA                           PRESUNTOACTOR  PRESUNTOVICTIMIZANTE FEcharEPORTE TIPOPOBLACION TIPOVICTIMA     PAIS   CIUDAD  CODDANEMUNICIPIORESIDENCIA  ZONARESIDENCIA  UBICACIONRESIDENCIA  DIRECCION  NUMTELEFONOFIJO  NUMTELEFONOCELULAR  EMAIL FECHAVALORACION ESTADOVICTIMA NOMBRECOMPLETO  IDSINIESTRO  IDMIJEFE TIPODESPLAZAMIENTO  REGISTRADURIA  VIGENCIADOCUMENTO  CONSPERSONA            RELACION  CODDANEDECLARACION  CODDANELLEGADA  CODIGOHECHO  DISCAPACIDAD DESCRIPCIONDISCAPACIDAD    FUD_FICHA                                       AFECTACIONES
+UNIDAD VICTIMAS RUV LEY 1448 LEY 1448 N   10033866  2008207            TI 1015192770      MERALDO           NaN          CAMPO       QUERAGAME      30/04/2007                  NaN                       NaN                     INDIGENA HOMBRE        NaN                                                                   AMENAZA      02/01/2012                       27073             NaN                  NaN       NO IDENTIFICA  (CONFLICTO ARMADO)                   NaN   13/02/2012         CIVIL     DIRECTA COLOMBIA      NaN                           0             NaN                  NaN        NaN              NaN                 NaN    NaN      13/08/2012      INCLUIDO        MERALDO        14053  10024658          NO APLICA              0                NaN     30270855 HIJO(A)/HIJASTRO(A)                5001               0            2             0                 NINGUNA AE0000851499                                                NaN
+UNIDAD VICTIMAS RUV LEY 1448 LEY 1448 N   10090212  2027620            CC   43275207         OLGA      PATRICIA          VICHE         NAVARRO      05/01/1980                  NaN                       NaN                      NINGUNA  MUJER        NaN                                                                   AMENAZA      29/02/2012                        5001             NaN                  NaN                          NO IDENTIFICA                    NaN   29/02/2012         CIVIL     DIRECTA COLOMBIA      NaN                           0             NaN                  NaN        NaN              NaN                 NaN    NaN      04/05/2012      INCLUIDO  OLGA PATRICIA        37289  10100003          NO APLICA              0                NaN     10614444         NO PARIENTE                5001               0            2             0                 NINGUNA AJ0000470563                                               OTRO
+UNIDAD VICTIMAS RUV LEY 1448 LEY 1448 N   10050025  2016284            CC 1045490491       VICTOR           NaN     BLANQUICET           PEREZ      22/09/1986                  NaN                       NaN                      NINGUNA HOMBRE        NaN                                                                   AMENAZA      28/02/2012                        5837             NaN                  NaN BACRIM  (RELACIÓN CERCANA Y SUFICIENTE)                   NaN   02/03/2012         CIVIL     DIRECTA COLOMBIA MEDELLÍN                        5001             NaN                  NaN        NaN              NaN                 NaN    NaN      04/05/2012      INCLUIDO         VICTOR        21004  10052565          NO APLICA              0                NaN     15461435    JEFE(A) DE HOGAR                5001               0            2             0                 NINGUNA AK0000502957                                               OTRO
+UNIDAD VICTIMAS RUV LEY 1448 LEY 1448 N   10036288  2012386            TI 1122677390        KAROL       DAYANNA         PULIDO            LASO      27/02/2007                  NaN                       NaN NEGRO(A) O AFROCOLOMBIANO(A)  MUJER        NaN ACTO TERRORISTA / ATENTADOS / COMBATES / ENFRENTAMIENTOS / HOSTIGAMIENTOS      14/01/2012                       95200             NaN                  NaN                    GRUPOS GUERRILLEROS                    NaN   27/02/2012         CIVIL     DIRECTA COLOMBIA      NaN                           0             NaN                  NaN        NaN              NaN                 NaN    NaN      04/05/2012      INCLUIDO  KAROL DAYANNA        15344  10038560          NO APLICA              0                NaN     25482154 HIJO(A)/HIJASTRO(A)               95001               0            1             0                 NINGUNA AD0000435253   DISMINUCIÓN O PÉRDIDA DE SUS FUENTES DE INGRESOS
+UNIDAD VICTIMAS RUV LEY 1448 LEY 1448 N   10090261  2027631            TI 1058078879     MAURICIO           NaN        ACEVEDO       JARAMILLO      15/12/2008                  NaN                       NaN                      NINGUNA HOMBRE        NaN                                                    DESPLAZAMIENTO FORZADO      15/02/2012                       66456             NaN                  NaN GRUPOS GUERRILLEROS  (CONFLICTO ARMADO)                   NaN   15/02/2012         CIVIL     DIRECTA COLOMBIA      NaN                           0             NaN                  NaN        NaN              NaN                 NaN    NaN      17/09/2012      INCLUIDO       MAURICIO        37309  10100066         INDIVIDUAL              0                NaN     25514858 HIJO(A)/HIJASTRO(A)                5001            5001            5             0                 NINGUNA AE0000462518                                                NaN
+2026-03-25 10:32:06,323 - INFO - 
+============================================================
+2026-03-25 10:32:06,323 - INFO - ----- PLAN DE CARGA: 53 lotes para 13,178,321 registros (Estrategia: COPY)
+2026-03-25 10:32:06,324 - INFO -   - 52 lotes de 250,000 =   13,000,000 registros
+2026-03-25 10:32:06,324 - INFO -   - 1 lote  parcial de   178,321 =      178,321 registros (ultimo lote)
+2026-03-25 10:32:06,325 - INFO - ============================================================
+2026-03-25 10:32:14,652 - INFO - 
+----- LOTE #1/53 | 250,000 registros | COPY
+2026-03-25 10:32:14,867 - INFO - ----- LOTE #1 ya procesado anteriormente. Saltando...
+2026-03-25 10:32:23,837 - INFO - 
+----- LOTE #2/53 | 250,000 registros | COPY
+2026-03-25 10:32:24,043 - INFO - ----- LOTE #2 ya procesado anteriormente. Saltando...
+2026-03-25 10:32:36,761 - INFO - 
+----- LOTE #3/53 | 250,000 registros | COPY
+2026-03-25 10:32:37,071 - INFO - ----- Iniciando normalizacion y limpieza profunda...
+2026-03-25 10:33:00,689 - INFO - ----- Normalizacion completada para 250,000 registros.
+2026-03-25 10:33:40,823 - INFO - ----- [LOTE #3] FINALIZADO EXITOSAMENTE
+2026-03-25 10:33:40,823 - INFO - ----- Resumen Lote: Procesados: 250000 | Fallidos: 0
+2026-03-25 10:33:40,824 - INFO - ----- Duracion: 40.07 seg | Rendimiento: 6238 filas/seg
+2026-03-25 10:33:40,825 - INFO - ------------------------------------------------------------
+2026-03-25 10:33:56,016 - INFO - 
+----- LOTE #4/53 | 250,000 registros | COPY
+2026-03-25 10:33:56,279 - INFO - ----- Iniciando normalizacion y limpieza profunda...
+2026-03-25 10:34:30,042 - INFO - ----- Normalizacion completada para 250,000 registros.
+2026-03-25 10:35:19,546 - INFO - ----- [LOTE #4] FINALIZADO EXITOSAMENTE
+2026-03-25 10:35:19,547 - INFO - ----- Resumen Lote: Procesados: 250000 | Fallidos: 0
+2026-03-25 10:35:19,548 - INFO - ----- Duracion: 49.41 seg | Rendimiento: 5059 filas/seg
+2026-03-25 10:35:19,549 - INFO - ------------------------------------------------------------
+2026-03-25 10:35:45,843 - INFO - 
+----- LOTE #5/53 | 250,000 registros | COPY
+2026-03-25 10:35:46,062 - INFO - ----- Iniciando normalizacion y limpieza profunda...
+2026-03-25 10:36:42,925 - INFO - ----- Normalizacion completada para 250,000 registros.
+2026-03-25 10:37:27,324 - INFO - ----- [LOTE #5] FINALIZADO EXITOSAMENTE
+2026-03-25 10:37:27,324 - INFO - ----- Resumen Lote: Procesados: 250000 | Fallidos: 0
+2026-03-25 10:37:27,324 - INFO - ----- Duracion: 44.35 seg | Rendimiento: 5636 filas/seg
+2026-03-25 10:37:27,325 - INFO - ------------------------------------------------------------
+2026-03-25 10:37:42,643 - INFO - 
+----- LOTE #6/53 | 250,000 registros | COPY
+2026-03-25 10:37:42,906 - INFO - ----- Iniciando normalizacion y limpieza profunda...
+2026-03-25 10:38:17,816 - INFO - ----- Normalizacion completada para 250,000 registros.

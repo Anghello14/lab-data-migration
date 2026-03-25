@@ -40,8 +40,24 @@ def inspect_file():
     # Se resta 1 para excluir la fila de encabezados del total de registros.
     total_filas = count - 1
 
+    # Análisis de calidad: lectura con dtype=str para distinguir vacíos de NaN textuales.
+    df_analysis = pd.read_csv(
+        FILE_ORIGEN, sep=SEP, engine='python', nrows=5,
+        encoding=ENCODING, dtype=str, keep_default_na=False
+    )
+    total_cells = df_analysis.size
+    # Campos nulos: celdas vacías o representaciones explícitas de ausencia de valor.
+    null_values = {'', 'null', 'none', 'sin dato'}
+    null_count = df_analysis.apply(lambda col: col.str.lower().str.strip().isin(null_values)).sum().sum()
+    # Campos NaN: celdas cuyo valor textual es alguna variante de 'nan' / 'na'.
+    nan_values  = {'NaN', 'nan', 'n/a', 'nan%'}
+    nan_count   = df_analysis.apply(lambda col: col.str.lower().str.strip().isin(nan_values)).sum().sum()
+    null_pct = (null_count / total_cells) * 100
+    nan_pct  = (nan_count  / total_cells) * 100
+
     # Reporte de diagnóstico inicial detallando dimensiones del dataset.
     logging.info(f"* Total filas: {total_filas:,} | Columnas: {len(df_sample.columns)}")
+    logging.info(f"* Calidad (primeras 5 filas): Nulos={null_pct:.1f}% ({null_count}/{total_cells} celdas) | NaN={nan_pct:.1f}% ({nan_count}/{total_cells} celdas)")
     logging.info(f"* Primeras 5 filas:\n{df_sample.to_string(index=False)}")
 
     return total_filas

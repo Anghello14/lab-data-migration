@@ -40,7 +40,7 @@ def check_ram_limit():
     inmediatamente para evitar un bloqueo (crash) del servidor.
     """
     mem = psutil.virtual_memory()
-    if mem.percent > 85:
+    if mem.percent > 92:
         logging.error(f"----- PANIC BUTTON: RAM al {mem.percent}%. Deteniendo para proteger el sistema.")
         sys.exit(1) # Cierre de emergencia preventivo.
 
@@ -100,9 +100,8 @@ def load_data(df, table_name, batch_id, strategy="execute_values"):
         ram_porcentaje = psutil.virtual_memory().percent
         consumoram_str = f"{ram_porcentaje:.1f}%"
 
-        # Finalizacion de transaccion: Actualiza el estado del lote y estadisticas de consumo.
         cur.execute(
-            "UPDATE control_lotes SET estado = 'FINALIZADO', filas_cargadas = %s, consumoram = %s WHERE batch_id = %s",
+            "UPDATE control_lotes SET estado = 'FINALIZADO', filas_cargadas = %s, consumoram = %s, fecha_proceso = NOW() WHERE batch_id = %s",
             (rows_to_process, consumoram_str, batch_id)
         )
         conn.commit()
