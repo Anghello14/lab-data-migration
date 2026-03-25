@@ -61,8 +61,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df_clean = df_clean.replace(reemplazos)
 
     # 4. VALIDACIÓN DINÁMICA DE CAMPOS NUMÉRICOS
-    # Evita el error 'Invalid value for dtype int64' detectado en pruebas previas.
-    # Filtra columnas que semanticamente representen IDs o codigos usando RegEx.
+    # Evita el error 'Invalid value for dtype int64' detectado en pruebas previas.Filtra columnas que semanticamente representen IDs o codigos usando RegEx.
     cols_para_int = [
         c for c in df_clean.columns 
         if re.search(r'\bid\b|\bcod|\bnum', c)
@@ -90,8 +89,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     SENTINEL = pd.Timestamp(MSG_ERR_FECHA)
     cols_fechas = [c for c in df_clean.columns if 'fecha' in c]
     for col in cols_fechas:
-        # Conversion a objeto DateTime con dia primero (formato LATAM).
-        # Los errores de formato se reemplazan con la fecha centinela 1930-01-01.
+        # Conversion a objeto DateTime con dia primero
         df_clean[col] = (
             pd.to_datetime(df_clean[col], dayfirst=True, errors='coerce')
             .fillna(SENTINEL)
