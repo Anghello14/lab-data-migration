@@ -1,4 +1,3 @@
-# Configuracion critica para terminales Windows: fuerza la salida en UTF-8 para soportar caracteres especiales y acentos en los logs sin errores de codificacion.
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 sys.stderr.reconfigure(encoding='utf-8')

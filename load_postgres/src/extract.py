@@ -3,11 +3,8 @@ import logging
 import os
 from config import FILE_ORIGEN
 
-# Definición de codificación Latin-1 para soportar caracteres especiales (ñ, tildes) 
-# frecuentes en bases de datos de origen Windows/Legacy sin errores de Unicode.
 ENCODING = 'latin-1'
 
-# Definición del separador especial '»' detectado en la inspección del archivo original.
 SEP = '»'
 
 # Constante de granularidad: define el bloque mínimo de lectura para optimizar el uso de buffer.
@@ -76,9 +73,7 @@ def stream_batches(plan):
         if eof and buffer_df.empty:
             break
 
-        # Lógica de acumulación en buffer:
-        # Mientras el buffer tenga menos filas de las solicitadas por el lote actual, 
-        # se siguen extrayendo 'BASE_CHUNK' filas del archivo original.
+        # Lógica de acumulación en buffer: Mientras el buffer tenga menos filas de las solicitadas por el lote actual, se siguen extrayendo 'BASE_CHUNK' filas del archivo original.
         while len(buffer_df) < size and not eof:
             try:
                 new_chunk = next(chunk_iter)
@@ -93,8 +88,7 @@ def stream_batches(plan):
         if buffer_df.empty:
             break
 
-        # Segmentación exacta:
-        # Se extrae del buffer únicamente la cantidad de filas requerida por el test actual.
+        # Segmentación exacta: Se extrae del buffer únicamente la cantidad de filas requerida por el test actual.
         lote_df = buffer_df.iloc[:size].copy()
         
         # Limpieza del buffer: se eliminan las filas entregadas para liberar memoria RAM.
