@@ -26,7 +26,7 @@ class OracleReader:
         """
         self.conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASS, dsn=DSN)
 
-    def get_count(self, table, condition="1=1"):
+    def get_count(self, table):
         """
         Obtiene el conteo exacto de filas en Oracle para reconciliación.
 
@@ -34,19 +34,17 @@ class OracleReader:
         exactamente las mismas filas que existen en la base de datos.
 
         Parámetros:
-          table     -- Nombre de la tabla a contar.
-          condition -- Cláusula WHERE opcional (por defecto selecciona todas).
+          table -- Nombre de la tabla a contar.
 
         Retorna:
           Entero con el número total de filas en Oracle.
         """
-        # Consulta de conteo con condición dinámica para posibles filtros futuros
-        query = f"SELECT COUNT(*) FROM {table} WHERE {condition}"
+        query = f"SELECT COUNT(*) FROM {table}"
         with self.conn.cursor() as cur:
             cur.execute(query)
             return cur.fetchone()[0]  # Retorna el primer (y único) valor de la fila
 
-    def extract_table_paginated(self, table, condition="1=1", batch_size=50000):
+    def extract_table_paginated(self, table, batch_size=50000):
         """
         Extrae todos los datos de una tabla usando paginación OFFSET/FETCH.
 
@@ -56,14 +54,13 @@ class OracleReader:
 
         Parámetros:
           table      -- Nombre de la tabla a extraer.
-          condition  -- Cláusula WHERE opcional.
           batch_size -- Número de filas por página (por defecto 50.000).
 
         Retorna:
           DataFrame de pandas con la extracción completa concatenada.
         """
         # Obtener total de filas para saber cuántas páginas iterar
-        total_rows = self.get_count(table, condition)
+        total_rows = self.get_count(table)
         offset = 0       # Posición inicial de la ventana de paginación
         chunks = []      # Lista para acumular cada bloque extraído
 
@@ -71,7 +68,6 @@ class OracleReader:
             # ORDER BY 1 es obligatorio en Oracle para usar OFFSET/FETCH
             query = f"""
                 SELECT * FROM {table}
-                WHERE {condition}
                 ORDER BY 1
                 OFFSET {offset} ROWS FETCH NEXT {batch_size} ROWS ONLY
             """
