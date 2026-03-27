@@ -114,13 +114,13 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
     if pk_col:
         # keep=False - marca tanto el primero como el segundo duplicado
         mask_duplicates = df_raw.duplicated(subset=[pk_col], keep=False)
-        flag(mask_duplicates, f"DUPLICATE_PK_{pk_col.upper()}")
+        flag(mask_duplicates, f"PK_DUPLICADA_{pk_col.upper()}")
 
 
     # Sexo: únicamente M / F / X son valores válidos
     gender_col = active_col('sexo')
     if gender_col:
-        flag(~df_raw[gender_col].isin(['M', 'F', 'X']), "INVALID_GENDER")
+        flag(~df_raw[gender_col].isin(['M', 'F', 'X']), "GENERO INVALIDO")
 
     # Email: debe contener @ y cumplir el formato básico de correo
     email_col = active_col('email')
@@ -129,7 +129,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
         email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
         flag(
             ~df_raw[email_col].astype(str).str.match(email_regex, na=False),
-            "INVALID_EMAIL"
+            "EMAIL INVALIDO"
         )
 
     # Hora de cita: formato obligatorio HH:MM (ej. 08:30, 14:00)
@@ -138,7 +138,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
         flag(
             # Regex: exactamente 2 dígitos, dos puntos, 2 dígitos
             ~df_raw[time_col].astype(str).str.match(r'^\d{2}:\d{2}$', na=False),
-            "INVALID_TIME"
+            "HORA INVALIDA"
         )
 
     # Montos negativos — ningún monto financiero puede ser negativo
@@ -148,7 +148,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
             flag(
                 # Convertir a numérico primero; errores de parsing → NaN (no se marcan aquí)
                 pd.to_numeric(df_raw[amount_col], errors='coerce') < 0,
-                "NEGATIVE_AMOUNT"
+                "MONTO NEGATIVO"
             )
 
     # Detecta columnas que debería tener un tipo numérico o de fecha pero llegaron como texto plano (dtype=object) desde Oracle.
@@ -160,7 +160,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
             parsed_date = pd.to_datetime(df_raw[c], errors='coerce')
             # Marcar solo los que tenían valor pero no se pudieron convertir
             mask_bad_type = df_raw[c].notna() & parsed_date.isna()
-            flag(mask_bad_type, f"WRONG_TYPE_{c.upper()}")
+            flag(mask_bad_type, f"TIPO ERRONEO{c.upper()}")
 
     # Columnas numéricas que llegaron como texto (dtype=object)
     numeric_fields = [
@@ -173,7 +173,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
             parsed_num = pd.to_numeric(df_raw[num_col], errors='coerce')
             # Registro con valor pero que no se pudo convertir a número
             mask_bad_num = df_raw[num_col].notna() & parsed_num.isna()
-            flag(mask_bad_num, f"WRONG_TYPE_{num_col.upper()}")
+            flag(mask_bad_num, f"TIPO ERRONEO{num_col.upper()}")
 
     # Valida que las fechas estén dentro de la ventana esperada según el tipo de período configurado en el YAML.
     # Valor por defecto si la tabla no tiene columna de fecha configurada
@@ -202,7 +202,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
         mask_out_of_range = parsed_dates.notna() & (
             (parsed_dates < min_date) | (parsed_dates > max_date)
         )
-        flag(mask_out_of_range, f"OUT_OF_RANGE_{date_col.upper()}")
+        flag(mask_out_of_range, f"FUERA DE RANGO{date_col.upper()}")
 
         # Registrar estadísticas del rango temporal real de los datos
         if parsed_dates.notna().any():
@@ -220,7 +220,7 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
     # DIRTY: todos los registros que fallaron al menos un criterio
     df_dirty = df_raw[is_dirty].copy()
     # Insertar columna de motivo al inicio para facilitar la revisión
-    df_dirty.insert(0, "REJECTION_REASON", reasons[is_dirty].values)
+    df_dirty.insert(0, "MOTIVO RECHAZO", reasons[is_dirty].values)
 
     # CLEAN: registros que pasaron todos los criterios
     df_clean = df_raw[~is_dirty].copy()
@@ -236,17 +236,17 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
     # RESUMEN — métricas consolidadas de calidad por tabla
     total = len(df_raw)
     df_summary = pd.DataFrame([{
-        "TABLE":                table,
-        "TOTAL_RECORDS":        total,
-        "CLEAN_RECORDS":        len(df_clean),
-        "DIRTY_RECORDS":        len(df_dirty),
+        "TABLA":                table,
+        "TOTAL_FILAS":        total,
+        "REGISTROS_LIMPIOS":        len(df_clean),
+        "REGISTROS_RECHAZADOS":        len(df_dirty),
         "TOTAL_NULLS":          int(df_raw.isnull().sum().sum()),   # Suma de nulos en toda la tabla
-        "DUPLICATE_PK":         int(df_raw.duplicated(subset=[pk_col], keep=False).sum()) if pk_col else 0,
-        "FULLY_NULL_COLUMNS":   ", ".join(fully_null_cols) if fully_null_cols else "NONE",
-        "DATE_MIN":             date_range_info["FECHA_MIN"],
-        "DATE_MAX":             date_range_info["FECHA_MAX"],
-        "OUT_OF_RANGE_RECORDS": date_range_info["FUERA_RANGO"],
-        "QUALITY_PCT":          f"{(len(df_clean) / total * 100) if total > 0 else 0:.2f}%",
+        "PK_DUPLICADA":         int(df_raw.duplicated(subset=[pk_col], keep=False).sum()) if pk_col else 0,
+        "COLUMNAS_VACIAS":   ", ".join(fully_null_cols) if fully_null_cols else "NONE",
+        "FECHA_MIN":             date_range_info["FECHA_MIN"],
+        "FECHA_MAX":             date_range_info["FECHA_MAX"],
+        "FUERA_RANGO": date_range_info["FUERA_RANGO"],
+        "PORCENTAJE_CALIDAD":          f"{(len(df_clean) / total * 100) if total > 0 else 0:.2f}%",
     }])
 
     # NULOS POR COLUMNA — detalle de nulos para cada campo
@@ -254,13 +254,13 @@ def segregate_data(df, table, pk=None, col_fecha=None, period_type=None):
     for col in df_raw.columns:
         null_count = int(df_raw[col].isnull().sum())  # Conteo de nulos en esta columna
         null_rows.append({
-            "TABLE":        table,
-            "COLUMN":       col,
-            "SOURCE_TYPE":  str(df_raw[col].dtype),           # Tipo de dato original de Oracle
-            "NULLS":        null_count,
-            "NON_NULLS":    total - null_count,
-            "NULL_PCT":     f"{(null_count / total * 100) if total > 0 else 0:.2f}%",
-            "FULLY_NULL":   "YES" if null_count == total else "NO",  # Columna completamente vacía
+            "TABLA":        table,
+            "COLUMNA":       col,
+            "TIPO_ORIGINAL":  str(df_raw[col].dtype),           # Tipo de dato original de Oracle
+            "NULOS":        null_count,
+            "NO_NULOS":    total - null_count,
+            "PORCENTAJE_NULOS":     f"{(null_count / total * 100) if total > 0 else 0:.2f}%",
+            "COLUMNAS_NULAS":   "YES" if null_count == total else "NO",  # Columna completamente vacía
         })
     df_null_cols = pd.DataFrame(null_rows)
 

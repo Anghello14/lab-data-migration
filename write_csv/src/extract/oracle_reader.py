@@ -71,8 +71,13 @@ class OracleReader:
                 ORDER BY 1
                 OFFSET {offset} ROWS FETCH NEXT {batch_size} ROWS ONLY
             """
-            # pd.read_sql devuelve un DataFrame directamente desde la conexión
-            chunk = pd.read_sql(query, self.conn)
+            # Usar cursor directamente para evitar el UserWarning de pd.read_sql
+            # con conexiones que no son SQLAlchemy
+            with self.conn.cursor() as cur:
+                cur.execute(query)
+                cols = [desc[0] for desc in cur.description]  # Nombres de columnas del resultado
+                rows = cur.fetchall()
+            chunk = pd.DataFrame(rows, columns=cols)
             chunks.append(chunk)
             offset += batch_size  # Avanzar la ventana al siguiente bloque
             logging.info(
