@@ -80,7 +80,7 @@ class OracleReader:
             chunks.append(chunk)
             offset += batch_size  # Avanzar la ventana al siguiente bloque
             logging.info(
-                f"[{table}] Extraídos {min(offset, total_rows)} "
+                f"[{table}] Extraidos {min(offset, total_rows)} "
                 f"de {total_rows} registros..."
             )
 

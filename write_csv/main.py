@@ -51,7 +51,7 @@ def setup_logging():
     logger.handlers = []
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
-    logging.info(f"Log de auditoría iniciado: {log_path.name}")
+    logging.info(f"Log de auditoria iniciado: {log_path.name}")
 
 
 def run_pipeline():
@@ -67,7 +67,7 @@ def run_pipeline():
     """
     # PASO 1 — Iniciar logging antes de cualquier operación
     setup_logging()
-    logging.info("!!! INICIANDO PIPELINE DE AUDITORÍA CRUDA !!!")
+    logging.info("INICIANDO PIPELINE DE AUDITORIA")
 
     # PASO 2 — Leer configuración de tablas desde el archivo YAML
     try:
@@ -75,7 +75,7 @@ def run_pipeline():
             # Obtiene el diccionario de tablas; devuelve {} si la clave no existe
             tables_config = yaml.safe_load(f).get('tablas', {})
     except Exception as e:
-        logging.error(f"Error al leer configuración YAML: {e}")
+        logging.error(f"Error al leer configuracion YAML: {e}")
         return  # Aborta el pipeline si no puede leer la configuración
 
     # Instancia del lector de Oracle — establece conexión en modo Thin
@@ -111,7 +111,7 @@ def run_pipeline():
 
     except Exception as e:
         # Captura cualquier error no controlado durante el procesamiento de tablas
-        logging.error(f"Error en la ejecución del pipeline: {e}")
+        logging.error(f"Error en la ejecucion del pipeline: {e}")
     finally:
         # Siempre cerrar la conexión a Oracle, aunque haya errores
         reader.close()
