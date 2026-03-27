@@ -1,0 +1,34 @@
+2026-03-27 14:03:27,841 - INFO - !!! INICIANDO PIPELINE DE MIGRACIÓN HOSPITALARIA !!!
+2026-03-27 14:03:27,843 - INFO - Configuración cargada correctamente. 10 tablas por procesar.
+2026-03-27 14:03:27,983 - INFO - --------------------------------------------------
+2026-03-27 14:03:27,984 - INFO - PROCESANDO: MUNICIPIOS
+2026-03-27 14:03:28,228 - INFO - [MUNICIPIOS] Extraídos 15 de 15 registros...
+2026-03-27 14:03:28,504 - INFO - ARCHIVOS GENERADOS: 15 correctos / 0 con errores.
+2026-03-27 14:03:28,504 - INFO - --------------------------------------------------
+2026-03-27 14:03:28,505 - INFO - PROCESANDO: ESPECIALIDADES
+2026-03-27 14:03:28,509 - INFO - [ESPECIALIDADES] Extraídos 15 de 15 registros...
+2026-03-27 14:03:28,556 - INFO - ARCHIVOS GENERADOS: 15 correctos / 0 con errores.
+2026-03-27 14:03:28,557 - INFO - --------------------------------------------------
+2026-03-27 14:03:28,557 - INFO - PROCESANDO: MEDICOS
+2026-03-27 14:03:28,567 - INFO - [MEDICOS] Extraídos 200 de 200 registros...
+2026-03-27 14:03:28,757 - INFO - ARCHIVOS GENERADOS: 200 correctos / 0 con errores.
+2026-03-27 14:03:28,758 - INFO - --------------------------------------------------
+2026-03-27 14:03:28,758 - INFO - PROCESANDO: PACIENTES
+2026-03-27 14:03:29,490 - INFO - [PACIENTES] Extraídos 50000 de 100000 registros...
+2026-03-27 14:03:30,167 - INFO - [PACIENTES] Extraídos 100000 de 100000 registros...
+2026-03-27 14:04:04,450 - INFO - ARCHIVOS GENERADOS: 100000 correctos / 0 con errores.
+2026-03-27 14:04:04,451 - INFO - --------------------------------------------------
+2026-03-27 14:04:04,451 - INFO - PROCESANDO: INTERNACIONES
+2026-03-27 14:04:04,752 - INFO - [INTERNACIONES] Extraídos 20000 de 20000 registros...
+2026-03-27 14:04:09,925 - INFO - ARCHIVOS GENERADOS: 20000 correctos / 0 con errores.
+2026-03-27 14:04:09,926 - INFO - --------------------------------------------------
+2026-03-27 14:04:09,926 - INFO - PROCESANDO: CITAS_MEDICAS
+2026-03-27 14:04:10,613 - INFO - [CITAS_MEDICAS] Extraídos 50000 de 150000 registros...
+2026-03-27 14:04:11,170 - INFO - [CITAS_MEDICAS] Extraídos 100000 de 150000 registros...
+2026-03-27 14:04:11,749 - INFO - [CITAS_MEDICAS] Extraídos 150000 de 150000 registros...
+2026-03-27 14:04:47,779 - INFO - ARCHIVOS GENERADOS: 150000 correctos / 0 con errores.
+2026-03-27 14:04:47,780 - INFO - --------------------------------------------------
+2026-03-27 14:04:47,780 - INFO - PROCESANDO: EXAMENES_MEDICOS
+2026-03-27 14:04:48,498 - INFO - [EXAMENES_MEDICOS] Extraídos 49218 de 49218 registros...
+2026-03-27 14:05:02,487 - INFO - ==================================================
+2026-03-27 14:05:02,488 - INFO - PIPELINE FINALIZADO EXITOSAMENTE.
